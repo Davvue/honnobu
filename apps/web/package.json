@@ -32,7 +32,9 @@
     "@angular/ssr": "^20.0.5",
     "@honnobu/shared": "workspace:*",
     "express": "^5.1.0",
+    "postcss": "^8.5.15",
     "rxjs": "~7.8.0",
+    "tailwindcss": "4.3.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
@@ -42,6 +44,7 @@
     "@angular/cli": "^20.0.5",
     "@angular/compiler-cli": "^20.0.0",
     "@honnobu/eslint-config": "workspace:*",
+    "@tailwindcss/postcss": "4.3.1",
     "@types/express": "^5.0.1",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^20.17.19",
