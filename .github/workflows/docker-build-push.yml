@@ -14,7 +14,7 @@ on:
         required: false
         type: string
         default: |
-          type=raw,value=latest
+          type=raw,value=edge
 
 permissions:
   contents: read
