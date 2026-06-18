@@ -1,0 +1,17 @@
+name: Beta
+
+on:
+  release:
+    types: [prereleased]
+  push:
+    branches:
+      - development
+
+jobs:
+  build-and-push:
+    uses: ./.github/workflows/docker-build-push.yml
+    with:
+      tags: |
+        type=raw,value=beta
+        type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+    secrets: inherit

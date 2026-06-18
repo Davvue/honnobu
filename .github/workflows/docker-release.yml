@@ -1,0 +1,16 @@
+name: Release
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  build-and-push:
+    uses: ./.github/workflows/docker-build-push.yml
+    with:
+      tags: |
+        type=semver,pattern={{version}}
+        type=semver,pattern={{major}}.{{minor}}
+        type=semver,pattern={{major}}
+        type=raw,value=latest
+    secrets: inherit
