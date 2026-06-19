@@ -22,7 +22,7 @@ import { join } from 'path';
         logging: ['warn', 'error'],
         autoLoadEntities: true,
         synchronize: configService.get('NODE_ENV') !== 'production',
-        migrations: [join(__dirname, 'migrations', '*{.ts,.js}')],
+        migrations: [join(__dirname, 'database', 'migrations', '*{.ts,.js}')],
         migrationsRun: false,
       }),
     }),
