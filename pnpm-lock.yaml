@@ -214,7 +214,7 @@ importers:
   apps/api:
     dependencies:
       '@honnobu/shared':
-        specifier: workspace:shared
+        specifier: workspace:*
         version: link:../../packages/shared
       '@nestjs/common':
         specifier: ^11.0.1
