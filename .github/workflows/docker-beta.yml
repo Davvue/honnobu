@@ -3,9 +3,6 @@ name: Build and Push Beta
 on:
   release:
     types: [prereleased]
-  push:
-    branches:
-      - development
 
 jobs:
   build-and-push:
@@ -13,5 +10,5 @@ jobs:
     with:
       tags: |
         type=raw,value=beta
-        type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+        type=semver,pattern={{version}}
     secrets: inherit
