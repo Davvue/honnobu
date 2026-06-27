@@ -1,0 +1,14 @@
+name: Build and Push Edge
+
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  build-and-push:
+    uses: ./.github/workflows/docker-build-push.yml
+    with:
+      tags: |
+        type=raw,value=edge
+    secrets: inherit
