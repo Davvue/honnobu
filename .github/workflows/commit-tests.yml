@@ -51,4 +51,4 @@ jobs:
         run: pnpm run init:packages
 
       - name: Run tests
-        run: pnpm --filter web test -- --watch=false --browsers=ChromeHeadless
+        run: pnpm --filter web test:ci
