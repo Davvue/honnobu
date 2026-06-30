@@ -22,5 +22,6 @@
   "devDependencies": {
     "prettier": "^3.4.2"
   },
-  "type": "module"
+  "type": "module",
+  "packageManager": "pnpm@11.8.0"
 }
