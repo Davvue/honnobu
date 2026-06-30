@@ -6,6 +6,8 @@ import { LoginDto } from './dto/login.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  async login(@Body() body: LoginDto) {}
+  @Post('login')
+  login(@Body() body: LoginDto) {
+    return body;
+  }
 }
