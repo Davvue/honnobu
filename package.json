@@ -4,10 +4,11 @@
   "private": true,
   "description": "Open-source and self-hosted book tracker",
   "scripts": {
-    "dev:api": "pnpm --filter api start:dev",
-    "dev:web": "pnpm --filter web start",
-    "build:api": "pnpm --filter api build",
-    "build:web": "pnpm --filter web build",
+    "init:packages": "pnpm --filter \"@honnobu/*\" build",
+    "dev:api": "pnpm run init:packages && pnpm --filter api start:dev",
+    "dev:web": "pnpm run init:packages && pnpm --filter web start",
+    "build:api": "pnpm run init:packages && pnpm --filter api build",
+    "build:web": "pnpm run init:packages && pnpm --filter web build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

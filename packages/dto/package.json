@@ -1,5 +1,5 @@
 {
-  "name": "@honnobu/shared",
+  "name": "@honnobu/dto",
   "version": "0.0.0",
   "private": true,
   "main": "./dist/index.js",
