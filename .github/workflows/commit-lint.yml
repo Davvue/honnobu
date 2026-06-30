@@ -1,0 +1,38 @@
+name: Commit lint
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: "commit-lint"
+  cancel-in-progress: false
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm run init:packages
+
+      - name: Prettier
+        run: pnpm format:check
+
+      - name: ESLint (API)
+        run: pnpm --filter api lint
+
+      - name: ESLint (Web)
+        run: pnpm --filter web lint
