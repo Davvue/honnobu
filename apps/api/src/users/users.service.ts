@@ -20,4 +20,12 @@ export class UsersService {
 
     return user;
   }
+
+  async findAuthUser(usernameOrEmail: string): Promise<User | null> {
+    return await this.usersRepository
+      .createQueryBuilder('user')
+      .where('user.email = :usernameOrEmail', { usernameOrEmail })
+      .orWhere('user.username = :usernameOrEmail', { usernameOrEmail })
+      .getOne();
+  }
 }
