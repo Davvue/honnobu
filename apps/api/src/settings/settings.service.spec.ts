@@ -1,7 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { SettingsService } from './settings.service';
 import { Setting, SettingType } from '../database/entities/setting.entity';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 
 describe('SettingsService', () => {
   let service: SettingsService;

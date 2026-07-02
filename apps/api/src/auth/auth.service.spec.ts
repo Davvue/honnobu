@@ -1,26 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
-import { ConfigModule } from '@nestjs/config';
-import { UsersService } from '../users/users.service';
+import { TestBed } from '@suites/unit';
 
 describe('AuthService', () => {
   let service: AuthService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot({ isGlobal: true })],
-      providers: [
-        AuthService,
-        {
-          provide: UsersService,
-          useValue: {
-            findAuthUser: jest.fn(),
-          },
-        },
-      ],
-    }).compile();
+    const { unit } = await TestBed.solitary(AuthService).compile();
 
-    service = module.get<AuthService>(AuthService);
+    service = unit;
   });
 
   it('should be defined', () => {
