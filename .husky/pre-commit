@@ -1,0 +1,11 @@
+API_FILES=$(git diff --cached --name-only --diff-filter=ACMR -- apps/api/ | sed 's|^apps/api/||' | sed 's| |\\ |g')
+pnpm --filter api lint $API_FILES
+pnpm --filter api format:fix $API_FILES --ignore-unknown
+pnpm --filter api test
+
+WEB_FILES=$(git diff --cached --name-only --diff-filter=ACMR -- apps/web/ | sed 's|^apps/web/||' | sed 's| |\\ |g')
+pnpm --filter web lint $WEB_FILES
+pnpm --filter web format:fix $WEB_FILES --ignore-unknown
+pnpm --filter web test:ci
+
+git update-index --again

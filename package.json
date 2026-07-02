@@ -10,7 +10,8 @@
     "build:api": "pnpm run init:packages && pnpm --filter api build",
     "build:web": "pnpm run init:packages && pnpm --filter web build",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "node .husky/install.mjs"
   },
   "devEngines": {
     "packageManager": {
@@ -20,6 +21,7 @@
     }
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "prettier": "^3.4.2"
   },
   "type": "module",
