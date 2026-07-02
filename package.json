@@ -9,8 +9,9 @@
     "dev:web": "pnpm run init:packages && pnpm --filter web start",
     "build:api": "pnpm run init:packages && pnpm --filter api build",
     "build:web": "pnpm run init:packages && pnpm --filter web build",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "format": "prettier --write",
+    "format:all": "prettier --check .",
     "prepare": "node .husky/install.mjs"
   },
   "devEngines": {

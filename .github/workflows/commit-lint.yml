@@ -29,10 +29,10 @@ jobs:
         run: pnpm run init:packages
 
       - name: Prettier
-        run: pnpm format:check
+        run: pnpm format:all
 
       - name: ESLint (API)
-        run: pnpm --filter api lint
+        run: pnpm --filter api lint:all
 
       - name: ESLint (Web)
-        run: pnpm --filter web lint
+        run: pnpm --filter web lint:all
