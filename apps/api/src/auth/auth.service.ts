@@ -11,6 +11,11 @@ import {
 } from '../types/TokenPayload';
 import { JwtService } from '@nestjs/jwt';
 import { LoginResponseDto } from '@honnobu/dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { RefreshToken } from '../database/entities/token.entity';
+import { Repository } from 'typeorm';
+import * as crypto from 'crypto';
+import dayjs from 'dayjs';
 
 interface TokenIds {
   sessionId: string;
@@ -20,12 +25,16 @@ interface TokenIds {
 
 @Injectable()
 export class AuthService {
+  // TODO: Move to settings
+  private readonly refreshExpiryDays = 30;
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepository: Repository<RefreshToken>
   ) {}
 
   public async signIn(loginDto: LoginDto): Promise<LoginResponseDto> {
@@ -49,6 +58,8 @@ export class AuthService {
 
     const tokens = this.generateTokens(user, ids);
 
+    await this.saveRefreshToken(tokens.refreshToken, ids, user);
+
     this.logger.log(`user ${user.id} logging in`);
     return {
       id: user.id,
@@ -57,6 +68,31 @@ export class AuthService {
       roles: user.roles,
       ...tokens,
     };
+  }
+
+  private async saveRefreshToken(
+    refreshToken: string,
+    ids: TokenIds,
+    user: User
+  ): Promise<void> {
+    try {
+      const tokenEntity = this.refreshTokenRepository.create({
+        id: ids.refreshTokenId,
+        sessionId: ids.sessionId,
+        user,
+        tokenHash: crypto
+          .createHash('sha256')
+          .update(refreshToken)
+          .digest('hex'),
+        expiresAt: dayjs().add(this.refreshExpiryDays, 'days').toISOString(),
+        revokedAt: null,
+      });
+      await this.refreshTokenRepository.save(tokenEntity);
+    } catch (err) {
+      this.logger.error(
+        `Failed to write refresh token to db: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
   }
 
   private generateTokens(
