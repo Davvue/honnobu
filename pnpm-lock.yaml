@@ -472,6 +472,10 @@ importers:
         version: 8.46.4(eslint@9.39.4(jiti@2.7.0))(typescript@5.8.3)
 
   packages/dto:
+    dependencies:
+      '@honnobu/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       tsup:
         specifier: ^8.5.1
