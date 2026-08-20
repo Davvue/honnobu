@@ -28,10 +28,11 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) {}
 
-  async signIn(loginDto: LoginDto): Promise<LoginResponseDto> {
+  public async signIn(loginDto: LoginDto): Promise<LoginResponseDto> {
     const ids = this.generateIds();
     const user = await this.usersService.findAuthUser(loginDto.usernameOrEmail);
-    if (!user) throw new UnauthorizedException(`invalid user or password`);
+    if (user == null)
+      throw new UnauthorizedException(`invalid user or password`);
 
     if (user.passwordHash == null)
       throw new UnauthorizedException(`passwordless login configured`);
