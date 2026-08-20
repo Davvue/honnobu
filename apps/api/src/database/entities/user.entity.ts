@@ -2,11 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Role } from '@honnobu/shared';
 import { Exclude } from 'class-transformer';
+import { RefreshToken } from './token.entity';
 
 @Entity('users')
 export class User {
@@ -80,4 +82,7 @@ export class User {
     type: 'timestamptz',
   })
   updatedAt: Date;
+
+  @OneToMany(() => RefreshToken, (token) => token.user)
+  refreshTokens: RefreshToken[];
 }
