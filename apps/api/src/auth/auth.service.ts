@@ -70,6 +70,12 @@ export class AuthService {
     };
   }
 
+  public async refresh() {}
+
+  public async signUp() {}
+
+  public async signOut() {}
+
   private async saveRefreshToken(
     refreshToken: string,
     ids: TokenIds,
