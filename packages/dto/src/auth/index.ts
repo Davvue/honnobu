@@ -5,5 +5,6 @@ export type { LoginResponseDto } from './LoginResponseDto';
 export type { RefreshResponseDto } from './RefreshResponseDto';
 export type {
   LogoutResponseDto,
+  LogoutSessionResponseDto,
   LogoutEverywhereResponseDto,
 } from './LogoutResponseDto';

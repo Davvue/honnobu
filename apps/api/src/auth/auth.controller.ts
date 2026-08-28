@@ -3,6 +3,8 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
   Post,
   Req,
 } from '@nestjs/common';
@@ -12,6 +14,7 @@ import {
   LoginResponseDto,
   LogoutEverywhereResponseDto,
   LogoutResponseDto,
+  LogoutSessionResponseDto,
   RefreshResponseDto,
 } from '@honnobu/dto';
 import type { HonRequest } from '../types/HonRequest';
@@ -37,6 +40,15 @@ export class AuthController {
   @Post('logout')
   async logout(@Req() req: HonRequest): Promise<LogoutResponseDto> {
     return this.authService.logout(req.user);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('logout/:sessionId')
+  async logoutSession(
+    @Req() req: HonRequest,
+    @Param('sessionId', new ParseUUIDPipe()) sessionId: string
+  ): Promise<LogoutSessionResponseDto> {
+    return await this.authService.logoutSession(req.user, sessionId);
   }
 
   @HttpCode(HttpStatus.OK)

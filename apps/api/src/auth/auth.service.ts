@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
@@ -20,6 +21,7 @@ import {
   LoginResponseDto,
   LogoutEverywhereResponseDto,
   LogoutResponseDto,
+  LogoutSessionResponseDto,
   RefreshResponseDto,
 } from '@honnobu/dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -160,6 +162,30 @@ export class AuthService {
     );
 
     return { sessionId: tokenPayload.sid };
+  }
+
+  public async logoutSession(
+    tokenPayload: AccessTokenPayload,
+    sessionId: string
+  ): Promise<LogoutSessionResponseDto> {
+    const session = await this.refreshTokenRepository.findOne({
+      where: {
+        user: { id: tokenPayload.sub },
+        sessionId: sessionId,
+        revokedAt: IsNull(),
+      },
+    });
+
+    if (session == null)
+      throw new NotFoundException(`session does not exist or already revoked`);
+
+    session.revokedAt = new Date();
+
+    await this.refreshTokenRepository.save(session);
+
+    return {
+      sessionId: session.id,
+    };
   }
 
   public async logoutEverywhere(
