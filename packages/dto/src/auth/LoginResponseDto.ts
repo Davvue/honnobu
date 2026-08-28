@@ -1,8 +1,7 @@
 import { Role } from '@honnobu/shared';
+import { TokenResponseDto } from './TokenResponseDto';
 
-export interface LoginResponseDto {
-  accessToken: string;
-  refreshToken: string;
+export interface LoginResponseDto extends TokenResponseDto {
   id: string;
   username: string;
   displayName: string;

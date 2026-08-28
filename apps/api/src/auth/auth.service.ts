@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import argon2 from 'argon2';
@@ -10,12 +15,13 @@ import {
   RefreshTokenPayload,
 } from '../types/TokenPayload';
 import { JwtService } from '@nestjs/jwt';
-import { LoginResponseDto } from '@honnobu/dto';
+import { LoginResponseDto, RefreshResponseDto } from '@honnobu/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshToken } from '../database/entities/token.entity';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import dayjs from 'dayjs';
+import { RefreshDto } from './dto/refresh.dto';
 
 interface TokenIds {
   sessionId: string;
@@ -70,7 +76,63 @@ export class AuthService {
     };
   }
 
-  public async refresh() {}
+  public async refresh(refreshDto: RefreshDto): Promise<RefreshResponseDto> {
+    let tokenPayload: AuthTokenPayload;
+
+    try {
+      tokenPayload = await this.jwtService.verifyAsync(refreshDto.refreshToken);
+    } catch {
+      throw new UnauthorizedException();
+    }
+
+    if (tokenPayload.tokenType !== 'refresh_token')
+      throw new UnauthorizedException();
+
+    const dbToken = await this.refreshTokenRepository.findOne({
+      where: {
+        id: tokenPayload.jti,
+        sessionId: tokenPayload.sid,
+      },
+      relations: { user: true },
+    });
+    if (
+      dbToken == null ||
+      dbToken.revokedAt != null ||
+      dbToken.user.id !== tokenPayload.sub
+    )
+      throw new UnauthorizedException();
+
+    if (dayjs(dbToken.expiresAt).isBefore(dayjs()))
+      throw new UnauthorizedException();
+
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(refreshDto.refreshToken)
+      .digest('hex');
+
+    if (dbToken.tokenHash !== tokenHash) throw new UnauthorizedException();
+
+    try {
+      await this.refreshTokenRepository.save({
+        ...dbToken,
+        revokedAt: dayjs().toISOString(),
+      });
+    } catch {
+      this.logger.error('Failed to revoke refresh token on refresh attempt');
+      throw new InternalServerErrorException();
+    }
+
+    const ids = this.generateIds();
+    const tokens = this.generateTokens(dbToken.user, {
+      ...ids,
+      sessionId: dbToken.sessionId,
+    });
+
+    return {
+      id: dbToken.user.id,
+      ...tokens,
+    };
+  }
 
   public async signUp() {}
 

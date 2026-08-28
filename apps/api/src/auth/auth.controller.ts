@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { LoginResponseDto } from '@honnobu/dto';
+import { LoginResponseDto, RefreshResponseDto } from '@honnobu/dto';
 import type { HonRequest } from '../types/HonRequest';
 import { RefreshDto } from './dto/refresh.dto';
 
@@ -24,7 +24,9 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
-  async refresh(@Body() _refreshDto: RefreshDto) {}
+  async refresh(@Body() refreshDto: RefreshDto): Promise<RefreshResponseDto> {
+    return this.authService.refresh(refreshDto);
+  }
 
   @HttpCode(HttpStatus.OK)
   @Post('logout')
