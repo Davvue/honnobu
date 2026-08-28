@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -86,7 +87,9 @@ export class AuthService {
     }
 
     if (tokenPayload.tokenType !== 'refresh_token')
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(
+        `Got token type ${tokenPayload.tokenType}, expected 'refresh_token'`
+      );
 
     const dbToken = await this.refreshTokenRepository.findOne({
       where: {
@@ -95,22 +98,24 @@ export class AuthService {
       },
       relations: { user: true },
     });
-    if (
-      dbToken == null ||
-      dbToken.revokedAt != null ||
-      dbToken.user.id !== tokenPayload.sub
-    )
-      throw new UnauthorizedException();
+
+    if (dbToken == null)
+      throw new UnauthorizedException(`refresh token not found in db`);
+    if (dbToken.revokedAt != null)
+      throw new UnauthorizedException(`refresh token revoked`);
+    if (dbToken.user.id !== tokenPayload.sub)
+      throw new ForbiddenException(`refresh token belongs to different user`);
 
     if (dayjs(dbToken.expiresAt).isBefore(dayjs()))
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(`refresh token already expired`);
 
     const tokenHash = crypto
       .createHash('sha256')
       .update(refreshDto.refreshToken)
       .digest('hex');
 
-    if (dbToken.tokenHash !== tokenHash) throw new UnauthorizedException();
+    if (dbToken.tokenHash !== tokenHash)
+      throw new UnauthorizedException(`refresh token hash mismatch`);
 
     try {
       await this.refreshTokenRepository.save({
