@@ -8,7 +8,12 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { LoginResponseDto, RefreshResponseDto } from '@honnobu/dto';
+import {
+  LoginResponseDto,
+  LogoutEverywhereResponseDto,
+  LogoutResponseDto,
+  RefreshResponseDto,
+} from '@honnobu/dto';
 import type { HonRequest } from '../types/HonRequest';
 import { RefreshDto } from './dto/refresh.dto';
 
@@ -30,5 +35,15 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  async logout(@Req() _req: HonRequest) {}
+  async logout(@Req() req: HonRequest): Promise<LogoutResponseDto> {
+    return this.authService.logout(req.user);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('logout-everywhere')
+  async logoutEverywhere(
+    @Req() req: HonRequest
+  ): Promise<LogoutEverywhereResponseDto> {
+    return this.authService.logoutEverywhere(req.user);
+  }
 }

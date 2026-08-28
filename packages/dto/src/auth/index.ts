@@ -3,3 +3,7 @@ export type { IRefreshDto } from './IRefreshDto';
 
 export type { LoginResponseDto } from './LoginResponseDto';
 export type { RefreshResponseDto } from './RefreshResponseDto';
+export type {
+  LogoutResponseDto,
+  LogoutEverywhereResponseDto,
+} from './LogoutResponseDto';

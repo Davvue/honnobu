@@ -16,10 +16,15 @@ import {
   RefreshTokenPayload,
 } from '../types/TokenPayload';
 import { JwtService } from '@nestjs/jwt';
-import { LoginResponseDto, RefreshResponseDto } from '@honnobu/dto';
+import {
+  LoginResponseDto,
+  LogoutEverywhereResponseDto,
+  LogoutResponseDto,
+  RefreshResponseDto,
+} from '@honnobu/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshToken } from '../database/entities/token.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import dayjs from 'dayjs';
 import { RefreshDto } from './dto/refresh.dto';
@@ -141,7 +146,35 @@ export class AuthService {
 
   public async signUp() {}
 
-  public async signOut() {}
+  public async logout(
+    tokenPayload: AccessTokenPayload
+  ): Promise<LogoutResponseDto> {
+    await this.refreshTokenRepository.update(
+      {
+        sessionId: tokenPayload.sid,
+        revokedAt: IsNull(),
+      },
+      {
+        revokedAt: new Date(),
+      }
+    );
+
+    return { sessionId: tokenPayload.sid };
+  }
+
+  public async logoutEverywhere(
+    tokenPayload: AccessTokenPayload
+  ): Promise<LogoutEverywhereResponseDto> {
+    await this.refreshTokenRepository.update(
+      {
+        user: { id: tokenPayload.sub },
+        revokedAt: IsNull(),
+      },
+      { revokedAt: new Date() }
+    );
+
+    return { success: true };
+  }
 
   private async saveRefreshToken(
     refreshToken: string,
