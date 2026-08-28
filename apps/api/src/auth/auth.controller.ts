@@ -14,7 +14,6 @@ import {
   LoginResponseDto,
   LogoutEverywhereResponseDto,
   LogoutResponseDto,
-  LogoutSessionResponseDto,
   RefreshResponseDto,
 } from '@honnobu/dto';
 import type { HonRequest } from '../types/HonRequest';
@@ -39,7 +38,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   async logout(@Req() req: HonRequest): Promise<LogoutResponseDto> {
-    return this.authService.logout(req.user);
+    return this.authService.logoutSession(req.user, req.user.sid);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -47,7 +46,7 @@ export class AuthController {
   async logoutSession(
     @Req() req: HonRequest,
     @Param('sessionId', new ParseUUIDPipe()) sessionId: string
-  ): Promise<LogoutSessionResponseDto> {
+  ): Promise<LogoutResponseDto> {
     return await this.authService.logoutSession(req.user, sessionId);
   }
 

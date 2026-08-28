@@ -21,7 +21,6 @@ import {
   LoginResponseDto,
   LogoutEverywhereResponseDto,
   LogoutResponseDto,
-  LogoutSessionResponseDto,
   RefreshResponseDto,
 } from '@honnobu/dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -148,26 +147,10 @@ export class AuthService {
 
   public async signUp() {}
 
-  public async logout(
-    tokenPayload: AccessTokenPayload
-  ): Promise<LogoutResponseDto> {
-    await this.refreshTokenRepository.update(
-      {
-        sessionId: tokenPayload.sid,
-        revokedAt: IsNull(),
-      },
-      {
-        revokedAt: new Date(),
-      }
-    );
-
-    return { sessionId: tokenPayload.sid };
-  }
-
   public async logoutSession(
     tokenPayload: AccessTokenPayload,
     sessionId: string
-  ): Promise<LogoutSessionResponseDto> {
+  ): Promise<LogoutResponseDto> {
     const session = await this.refreshTokenRepository.findOne({
       where: {
         user: { id: tokenPayload.sub },
