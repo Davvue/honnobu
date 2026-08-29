@@ -162,11 +162,12 @@ export class AuthService {
       throw new InternalServerErrorException();
     }
 
-    const ids = this.generateIds();
-    const tokens = this.generateTokens(dbToken.user, {
-      ...ids,
+    const ids = this.generateIds({
       sessionId: dbToken.sessionId,
     });
+    const tokens = this.generateTokens(dbToken.user, ids);
+
+    await this.saveRefreshToken(tokens.refreshToken, ids, dbToken.user);
 
     return {
       id: dbToken.user.id,
@@ -281,11 +282,12 @@ export class AuthService {
     return this.jwtService.sign(payload, options);
   }
 
-  private generateIds(): TokenIds {
+  private generateIds(overrideIds: Partial<TokenIds> = {}): TokenIds {
     return {
       sessionId: crypto.randomUUID(),
       accessTokenId: crypto.randomUUID(),
       refreshTokenId: crypto.randomUUID(),
+      ...overrideIds,
     };
   }
 }
