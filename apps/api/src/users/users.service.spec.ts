@@ -1,25 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from '../database/entities/user.entity';
 import { UsersService } from './users.service';
+import { TestBed } from '@suites/unit';
 
 describe('UsersService', () => {
   let service: UsersService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UsersService,
-        {
-          provide: getRepositoryToken(User),
-          useValue: {
-            findOne: jest.fn(),
-          },
-        },
-      ],
-    }).compile();
+    const { unit } = await TestBed.solitary(UsersService).compile();
 
-    service = module.get<UsersService>(UsersService);
+    service = unit;
   });
 
   it('should be defined', () => {

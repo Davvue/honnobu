@@ -54,13 +54,13 @@ export class AuthService {
     private readonly refreshTokenRepository: Repository<RefreshToken>
   ) {}
 
-  public async signup(_signupDto: SignupDto): Promise<SignupResponseDto> {
+  public async signup(signupDto: SignupDto): Promise<SignupResponseDto> {
     const isSignupEnabled = this.signupEnabled; // TODO: Fetch from settings
     if (!isSignupEnabled) throw new ForbiddenException('signup is disabled');
 
     const ids = this.generateIds();
 
-    const user = await this.usersService.findUserById(''); // TODO: create user
+    const user = await this.usersService.create(signupDto);
 
     const tokens = this.generateTokens(user, ids);
     await this.saveRefreshToken(tokens.refreshToken, ids, user);
@@ -85,7 +85,9 @@ export class AuthService {
       user.passwordHash,
       loginDto.password,
       {
-        secret: this.configService.getOrThrow('AUTH_SECRET'),
+        secret: Buffer.from(
+          this.configService.getOrThrow<string>('AUTH_SECRET')
+        ),
       }
     );
     if (!verificationResult)
