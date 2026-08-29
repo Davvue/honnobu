@@ -7,13 +7,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 export class SettingsService {
   private readonly logger = new Logger(SettingsService.name);
 
-  private settingsMap: { [key: string]: unknown };
+  private readonly settingsMap: Map<string, unknown>;
 
   constructor(
     @InjectRepository(Setting)
     private readonly settingsRepository: Repository<Setting>
   ) {
-    this.settingsMap = {};
+    this.settingsMap = new Map<string, unknown>();
     this.logger.debug('Loading settings from DB');
     this.loadSettingsFromDB()
       .then(() => {
@@ -30,37 +30,37 @@ export class SettingsService {
     for (const setting of settings) {
       switch (setting.type) {
         case SettingType.BOOLEAN:
-          this.settingsMap[setting.key] = setting.value === 'true';
+          this.settingsMap.set(setting.key, setting.value === 'true');
           break;
         case SettingType.JSON:
-          this.settingsMap[setting.key] = JSON.parse(setting.value);
+          this.settingsMap.set(setting.key, JSON.parse(setting.value));
           break;
         case SettingType.INTEGER:
-          this.settingsMap[setting.key] = parseInt(setting.value);
+          this.settingsMap.set(setting.key, parseInt(setting.value));
           break;
         case SettingType.FLOAT:
-          this.settingsMap[setting.key] = parseFloat(setting.value);
+          this.settingsMap.set(setting.key, parseFloat(setting.value));
           break;
         case SettingType.TEXT:
         case SettingType.STRING:
-        default:
-          this.settingsMap[setting.key] = setting.value;
+          this.settingsMap.set(setting.key, setting.value);
+          break;
       }
     }
   }
 
   public get<T>(key: string): T | null | undefined {
-    return this.settingsMap[key] as T;
+    return this.settingsMap.get(key) as T;
   }
 
   public getOrElse<T>(key: string, other: T): T {
-    return (this.settingsMap[key] as T) ?? other;
+    return (this.settingsMap.get(key) as T) ?? other;
   }
 
   public getOrThrow<T>(key: string): T {
-    if (!(key in this.settingsMap)) throw new Error(`setting ${key} not found`);
+    if (!this.settingsMap.has(key)) throw new Error(`setting ${key} not found`);
 
-    return this.settingsMap[key] as T;
+    return this.settingsMap.get(key) as T;
   }
 
   public async getAllEntities(): Promise<Setting[]> {
