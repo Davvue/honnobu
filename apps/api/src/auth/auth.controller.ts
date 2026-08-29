@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Post,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signIn.dto';
@@ -20,6 +21,7 @@ import {
 import type { HonRequest } from '../types/HonRequest';
 import { RefreshDto } from './dto/refresh.dto';
 import { SignUpDto } from './dto/signUp.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller({ version: '1', path: 'auth' })
 export class AuthController {
@@ -43,12 +45,14 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Req() req: HonRequest): Promise<LogoutResponseDto> {
     return this.authService.logoutSession(req.user, req.user.sid);
   }
 
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
   @Post('logout/:sessionId')
   async logoutSession(
     @Req() req: HonRequest,
@@ -58,6 +62,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
   @Post('logout-everywhere')
   async logoutEverywhere(
     @Req() req: HonRequest
