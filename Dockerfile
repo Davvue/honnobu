@@ -19,12 +19,12 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM base AS build-api
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --filter=api... --frozen-lockfile
-RUN pnpm --filter api build
+RUN pnpm --filter=api... build
 
 FROM base AS build-web
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --filter=web... --frozen-lockfile
-RUN pnpm --filter web build
+RUN pnpm --filter=web... build
 
 FROM node:22-alpine AS runtime-api
 ENV NODE_ENV=production
@@ -32,6 +32,8 @@ WORKDIR /app/apps/api
 COPY --from=prod-deps-api /app/node_modules /app/node_modules
 COPY --from=prod-deps-api /app/apps/api/node_modules ./node_modules
 COPY --from=prod-deps-api /app/packages /app/packages
+COPY --from=build-api /app/packages/shared/dist /app/packages/shared/dist
+COPY --from=build-api /app/packages/dto/dist /app/packages/dto/dist
 COPY --from=build-api /app/apps/api/dist ./dist
 COPY apps/api/package.json ./package.json
 USER node
@@ -44,6 +46,7 @@ WORKDIR /app/apps/web
 COPY --from=prod-deps-web /app/node_modules /app/node_modules
 COPY --from=prod-deps-web /app/apps/web/node_modules ./node_modules
 COPY --from=prod-deps-web /app/packages /app/packages
+COPY --from=build-web /app/packages/shared/dist /app/packages/shared/dist
 COPY --from=build-web /app/apps/web/dist ./dist
 COPY apps/web/package.json ./package.json
 USER node
