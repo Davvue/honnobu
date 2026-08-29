@@ -68,4 +68,12 @@ export class UsersService {
       .orWhere('user.username = :usernameOrEmail', { usernameOrEmail })
       .getOne();
   }
+
+  public async updateLastLogin(id: string): Promise<User> {
+    const user = await this.findUserById(id);
+    user.lastLogin = new Date();
+
+    await this.usersRepository.save(user);
+    return this.findUserById(user.id);
+  }
 }

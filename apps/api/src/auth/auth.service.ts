@@ -65,6 +65,7 @@ export class AuthService {
 
     const tokens = this.generateTokens(user, ids);
     await this.saveRefreshToken(tokens.refreshToken, ids, user);
+    await this.usersService.updateLastLogin(user.id);
 
     this.logger.log(`user ${user.id} signed up, continuing with login`);
     return {
@@ -99,6 +100,7 @@ export class AuthService {
     const tokens = this.generateTokens(user, ids);
 
     await this.saveRefreshToken(tokens.refreshToken, ids, user);
+    await this.usersService.updateLastLogin(user.id);
 
     this.logger.log(`user ${user.id} logging in`);
     return {
