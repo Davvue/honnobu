@@ -16,7 +16,7 @@ import {
   AuthTokenPayload,
   RefreshTokenPayload,
 } from '../types/TokenPayload';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import {
   LoginResponseDto,
   LogoutEverywhereResponseDto,
@@ -31,6 +31,7 @@ import * as crypto from 'crypto';
 import dayjs from 'dayjs';
 import { RefreshDto } from './dto/refresh.dto';
 import { SignupDto } from './dto/signup.dto';
+import { SettingsService } from '../settings/settings.service';
 
 interface TokenIds {
   sessionId: string;
@@ -40,22 +41,22 @@ interface TokenIds {
 
 @Injectable()
 export class AuthService {
-  // TODO: Move to settings
-  private readonly refreshExpiryDays = 30;
-  // TODO: Move to settings
-  private readonly signupEnabled: boolean = false;
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
+    private readonly settingsService: SettingsService,
     private readonly jwtService: JwtService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>
   ) {}
 
   public async signup(signupDto: SignupDto): Promise<SignupResponseDto> {
-    const isSignupEnabled = this.signupEnabled; // TODO: Fetch from settings
+    const isSignupEnabled = this.settingsService.getOrElse(
+      'SignupEnabled',
+      false
+    );
     if (!isSignupEnabled) throw new ForbiddenException('signup is disabled');
 
     const ids = this.generateIds();
@@ -212,6 +213,11 @@ export class AuthService {
     ids: TokenIds,
     user: User
   ): Promise<void> {
+    const refreshExpiryDays = this.settingsService.getOrElse<number>(
+      'RefreshExpiryDays',
+      30
+    );
+
     try {
       const tokenEntity = this.refreshTokenRepository.create({
         id: ids.refreshTokenId,
@@ -221,7 +227,7 @@ export class AuthService {
           .createHash('sha256')
           .update(refreshToken)
           .digest('hex'),
-        expiresAt: dayjs().add(this.refreshExpiryDays, 'days').toISOString(),
+        expiresAt: dayjs().add(refreshExpiryDays, 'days').toISOString(),
         revokedAt: null,
       });
       await this.refreshTokenRepository.save(tokenEntity);
@@ -254,12 +260,21 @@ export class AuthService {
 
     return {
       accessToken: this.signToken(accessTokenPayload),
-      refreshToken: this.signToken(refreshTokenPayload),
+      refreshToken: this.signToken(
+        refreshTokenPayload,
+        this.settingsService.getOrElse('RefreshExpiryDays', 30)
+      ),
     };
   }
 
-  private signToken(payload: AuthTokenPayload): string {
-    return this.jwtService.sign(payload);
+  private signToken(
+    payload: AuthTokenPayload,
+    expiryOverride?: number
+  ): string {
+    const options: JwtSignOptions = {};
+    if (expiryOverride != null) options.expiresIn = `${expiryOverride} days`;
+
+    return this.jwtService.sign(payload, options);
   }
 
   private generateIds(): TokenIds {
