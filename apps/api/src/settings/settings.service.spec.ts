@@ -2,10 +2,26 @@ import { SettingsService } from './settings.service';
 import { Setting, SettingType } from '../database/entities/setting.entity';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { SETTING_DEFINITIONS } from './settings.definitions';
 
 describe('SettingsService', () => {
+  type OrUpdateArgs = [
+    overwrite: string[],
+    conflictTarget: string[],
+    options?: { skipUpdateIfNoValuesChanged?: boolean },
+  ];
+
+  type QueryBuilderMock = {
+    insert: jest.Mock<QueryBuilderMock, []>;
+    into: jest.Mock<QueryBuilderMock, [unknown]>;
+    values: jest.Mock<QueryBuilderMock, [unknown]>;
+    orUpdate: jest.Mock<QueryBuilderMock, OrUpdateArgs>;
+    execute: jest.Mock<Promise<unknown>, []>;
+  };
+
   let service: SettingsService;
   let findMock: jest.Mock;
+  let queryBuilder: QueryBuilderMock;
 
   const buildSetting = (overrides: Partial<Setting>): Setting => ({
     id: 'id',
@@ -24,6 +40,16 @@ describe('SettingsService', () => {
   const createService = async (settings: Setting[] = []): Promise<void> => {
     findMock = jest.fn<Promise<Setting[]>, []>().mockResolvedValue(settings);
 
+    queryBuilder = {
+      insert: jest.fn<QueryBuilderMock, []>(() => queryBuilder),
+      into: jest.fn<QueryBuilderMock, [unknown]>(() => queryBuilder),
+      values: jest.fn<QueryBuilderMock, [unknown]>(() => queryBuilder),
+      orUpdate: jest.fn<QueryBuilderMock, OrUpdateArgs>(() => queryBuilder),
+      execute: jest.fn<Promise<unknown>, []>().mockResolvedValue({
+        identifiers: [],
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SettingsService,
@@ -31,6 +57,7 @@ describe('SettingsService', () => {
           provide: getRepositoryToken(Setting),
           useValue: {
             find: findMock,
+            createQueryBuilder: (): QueryBuilderMock => queryBuilder,
           },
         },
       ],
@@ -38,8 +65,7 @@ describe('SettingsService', () => {
 
     service = module.get<SettingsService>(SettingsService);
 
-    // the constructor kicks off an async DB load; flush it before each test runs
-    await new Promise((res) => process.nextTick(res));
+    await service.onModuleInit();
   };
 
   it('should be defined', async () => {
@@ -51,6 +77,54 @@ describe('SettingsService', () => {
     await createService();
     expect(findMock).toHaveBeenCalledWith({
       order: { key: 'ASC' },
+    });
+  });
+
+  describe('seeding', () => {
+    it('upserts every definition on init', async () => {
+      await createService();
+      expect(queryBuilder.values).toHaveBeenCalledWith([
+        ...SETTING_DEFINITIONS,
+      ]);
+    });
+
+    it('refreshes metadata but never the stored value', async () => {
+      await createService();
+
+      const [overwrite, conflictTarget] = queryBuilder.orUpdate.mock.calls[0];
+
+      expect(overwrite).not.toContain('value');
+      expect(overwrite).toEqual(
+        expect.arrayContaining([
+          'type',
+          'description_key',
+          'group',
+          'subgroup',
+          'order_index',
+        ])
+      );
+      expect(conflictTarget).toEqual(['key']);
+    });
+
+    it('skips the write when nothing in the definitions changed', async () => {
+      await createService();
+
+      const [, , options] = queryBuilder.orUpdate.mock.calls[0];
+
+      expect(options?.skipUpdateIfNoValuesChanged).toBe(true);
+    });
+
+    it('seeds before loading, so new definitions land in the map', async () => {
+      await createService([
+        buildSetting({
+          key: 'SignupEnabled',
+          value: 'false',
+          type: SettingType.BOOLEAN,
+        }),
+      ]);
+
+      expect(queryBuilder.values).toHaveBeenCalled();
+      expect(service.get<boolean>('SignupEnabled')).toBe(false);
     });
   });
 
