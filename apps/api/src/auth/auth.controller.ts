@@ -15,13 +15,20 @@ import {
   LogoutEverywhereResponseDto,
   LogoutResponseDto,
   RefreshResponseDto,
+  SignupResponseDto,
 } from '@honnobu/dto';
 import type { HonRequest } from '../types/HonRequest';
 import { RefreshDto } from './dto/refresh.dto';
+import { SignupDto } from './dto/signup.dto';
 
 @Controller({ version: '1', path: 'auth' })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('signup')
+  async signup(@Body() signupDto: SignupDto): Promise<SignupResponseDto> {
+    return this.authService.signup(signupDto);
+  }
 
   @HttpCode(HttpStatus.OK)
   @Post('login')

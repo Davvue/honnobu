@@ -22,6 +22,7 @@ import {
   LogoutEverywhereResponseDto,
   LogoutResponseDto,
   RefreshResponseDto,
+  SignupResponseDto,
 } from '@honnobu/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshToken } from '../database/entities/token.entity';
@@ -29,6 +30,7 @@ import { IsNull, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import dayjs from 'dayjs';
 import { RefreshDto } from './dto/refresh.dto';
+import { SignupDto } from './dto/signup.dto';
 
 interface TokenIds {
   sessionId: string;
@@ -40,6 +42,8 @@ interface TokenIds {
 export class AuthService {
   // TODO: Move to settings
   private readonly refreshExpiryDays = 30;
+  // TODO: Move to settings
+  private readonly signupEnabled: boolean = false;
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
@@ -49,6 +53,24 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>
   ) {}
+
+  public async signup(_signupDto: SignupDto): Promise<SignupResponseDto> {
+    const isSignupEnabled = this.signupEnabled; // TODO: Fetch from settings
+    if (!isSignupEnabled) throw new ForbiddenException('signup is disabled');
+
+    const ids = this.generateIds();
+
+    const user = await this.usersService.findUserById(''); // TODO: create user
+
+    const tokens = this.generateTokens(user, ids);
+    await this.saveRefreshToken(tokens.refreshToken, ids, user);
+
+    this.logger.log(`user ${user.id} signed up, continuing with login`);
+    return {
+      id: user.id,
+      ...tokens,
+    };
+  }
 
   public async signIn(loginDto: LoginDto): Promise<LoginResponseDto> {
     const ids = this.generateIds();
@@ -144,8 +166,6 @@ export class AuthService {
       ...tokens,
     };
   }
-
-  public async signUp() {}
 
   public async logoutSession(
     tokenPayload: AccessTokenPayload,
