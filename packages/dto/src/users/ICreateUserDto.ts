@@ -1,5 +1,5 @@
-import { ISignupDto } from '../auth';
+import { ISignUpDto } from '../auth';
 
-export interface ICreateUserDto extends ISignupDto {
+export interface ICreateUserDto extends ISignUpDto {
   email?: string;
 }

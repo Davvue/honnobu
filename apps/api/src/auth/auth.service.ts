@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { LoginDto } from './dto/login.dto';
+import { SignInDto } from './dto/signIn.dto';
 import argon2 from 'argon2';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../database/entities/user.entity';
@@ -18,11 +18,11 @@ import {
 } from '../types/TokenPayload';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import {
-  LoginResponseDto,
   LogoutEverywhereResponseDto,
   LogoutResponseDto,
   RefreshResponseDto,
-  SignupResponseDto,
+  SignInResponseDto,
+  SignUpResponseDto,
 } from '@honnobu/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshToken } from '../database/entities/token.entity';
@@ -30,7 +30,7 @@ import { IsNull, Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import dayjs from 'dayjs';
 import { RefreshDto } from './dto/refresh.dto';
-import { SignupDto } from './dto/signup.dto';
+import { SignUpDto } from './dto/signUp.dto';
 import { SettingsService } from '../settings/settings.service';
 
 interface TokenIds {
@@ -52,7 +52,7 @@ export class AuthService {
     private readonly refreshTokenRepository: Repository<RefreshToken>
   ) {}
 
-  public async signup(signupDto: SignupDto): Promise<SignupResponseDto> {
+  public async signUp(signUpDto: SignUpDto): Promise<SignUpResponseDto> {
     const isSignupEnabled = this.settingsService.getOrElse(
       'SignupEnabled',
       false
@@ -61,7 +61,7 @@ export class AuthService {
 
     const ids = this.generateIds();
 
-    const user = await this.usersService.create(signupDto);
+    const user = await this.usersService.create(signUpDto);
 
     const tokens = this.generateTokens(user, ids);
     await this.saveRefreshToken(tokens.refreshToken, ids, user);
@@ -73,9 +73,11 @@ export class AuthService {
     };
   }
 
-  public async signIn(loginDto: LoginDto): Promise<LoginResponseDto> {
+  public async signIn(signInDto: SignInDto): Promise<SignInResponseDto> {
     const ids = this.generateIds();
-    const user = await this.usersService.findAuthUser(loginDto.usernameOrEmail);
+    const user = await this.usersService.findAuthUser(
+      signInDto.usernameOrEmail
+    );
     if (user == null)
       throw new UnauthorizedException(`invalid user or password`);
 
@@ -84,7 +86,7 @@ export class AuthService {
 
     const verificationResult = await argon2.verify(
       user.passwordHash,
-      loginDto.password,
+      signInDto.password,
       {
         secret: Buffer.from(
           this.configService.getOrThrow<string>('AUTH_SECRET')

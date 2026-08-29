@@ -9,31 +9,31 @@ import {
   Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
+import { SignInDto } from './dto/signIn.dto';
 import {
-  LoginResponseDto,
   LogoutEverywhereResponseDto,
   LogoutResponseDto,
   RefreshResponseDto,
-  SignupResponseDto,
+  SignInResponseDto,
+  SignUpResponseDto,
 } from '@honnobu/dto';
 import type { HonRequest } from '../types/HonRequest';
 import { RefreshDto } from './dto/refresh.dto';
-import { SignupDto } from './dto/signup.dto';
+import { SignUpDto } from './dto/signUp.dto';
 
 @Controller({ version: '1', path: 'auth' })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('signup')
-  async signup(@Body() signupDto: SignupDto): Promise<SignupResponseDto> {
-    return this.authService.signup(signupDto);
+  @Post('sign-up')
+  async signUp(@Body() signUpDto: SignUpDto): Promise<SignUpResponseDto> {
+    return this.authService.signUp(signUpDto);
   }
 
   @HttpCode(HttpStatus.OK)
-  @Post('login')
-  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
-    return this.authService.signIn(loginDto);
+  @Post('sign-in')
+  async signIn(@Body() signInDto: SignInDto): Promise<SignInResponseDto> {
+    return this.authService.signIn(signInDto);
   }
 
   @HttpCode(HttpStatus.OK)
