@@ -4,12 +4,15 @@
   "private": true,
   "description": "Open-source and self-hosted book tracker",
   "scripts": {
-    "dev:api": "pnpm --filter api start:dev",
-    "dev:web": "pnpm --filter web start",
-    "build:api": "pnpm --filter api build",
-    "build:web": "pnpm --filter web build",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "init:packages": "pnpm --filter \"@honnobu/*\" build",
+    "dev:api": "pnpm run init:packages && pnpm --filter api start:dev",
+    "dev:web": "pnpm run init:packages && pnpm --filter web start",
+    "build:api": "pnpm run init:packages && pnpm --filter api build",
+    "build:web": "pnpm run init:packages && pnpm --filter web build",
+    "format:fix": "prettier --write .",
+    "format": "prettier --write",
+    "format:all": "prettier --check .",
+    "prepare": "node .husky/install.mjs"
   },
   "devEngines": {
     "packageManager": {
@@ -19,7 +22,9 @@
     }
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "prettier": "^3.4.2"
   },
-  "type": "module"
+  "type": "module",
+  "packageManager": "pnpm@11.8.0"
 }

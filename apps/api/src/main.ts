@@ -13,7 +13,7 @@ const LOG_LEVELS: LogLevel[] = [
   'verbose',
 ];
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const logLevel = LOG_LEVELS.includes(process.env.LOG_LEVEL as LogLevel)
     ? (process.env.LOG_LEVEL as LogLevel)
     : 'log';

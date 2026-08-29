@@ -1,66 +1,137 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Setting, SettingType } from '../database/entities/setting.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { SETTING_DEFINITIONS, SettingKey } from './settings.definitions';
+
+/**
+ * Columns to be refreshed from their definition on application boot.
+ * `value` is deliberately missing as metadata refresh should not overwrite
+ * user-changed values
+ *
+ * @type {string[]}
+ */
+const SEEDED_METADATA_COLUMNS = [
+  'type',
+  'description_key',
+  'group',
+  'subgroup',
+  'order_index',
+];
 
 @Injectable()
-export class SettingsService {
+export class SettingsService implements OnModuleInit {
   private readonly logger = new Logger(SettingsService.name);
 
-  private settingsMap: { [key: string]: unknown };
+  private readonly settingsMap: Map<SettingKey, unknown> = new Map<
+    SettingKey,
+    unknown
+  >();
 
   constructor(
     @InjectRepository(Setting)
     private readonly settingsRepository: Repository<Setting>
-  ) {
-    this.settingsMap = {};
-    this.logger.debug('Loading settings from DB');
-    this.loadSettingsFromDB()
-      .then(() => {
-        this.logger.debug(`Initial settings load from DB completed`);
+  ) {}
+
+  public async onModuleInit(): Promise<void> {
+    this.logger.debug('Initializing settings table');
+    await this.seedDefinitions();
+    await this.loadSettingsFromDB();
+    this.logger.debug('Done initializing settings table');
+  }
+
+  /**
+   * Reconciles the settings table with their definitions. New definitions get
+   * inserted with their default value. Already existing definitions keep
+   * their value and only refresh metadata
+   *
+   * @returns {Promise<void>}
+   * @async
+   * @private
+   */
+  private async seedDefinitions(): Promise<void> {
+    this.logger.debug('Seeding settings table');
+    const existingKeys = new Set(
+      (await this.settingsRepository.find({ select: { key: true } })).map(
+        (setting) => setting.key
+      )
+    );
+
+    const insertedKeys = SETTING_DEFINITIONS.filter(
+      (definition) => !existingKeys.has(definition.key)
+    ).map((definition) => definition.key);
+
+    await this.settingsRepository
+      .createQueryBuilder()
+      .insert()
+      .into(Setting)
+      .values([...SETTING_DEFINITIONS])
+      .orUpdate(SEEDED_METADATA_COLUMNS, ['key'], {
+        skipUpdateIfNoValuesChanged: true,
       })
-      .catch((err) => {
-        this.logger.error(`Failed initial setting load: ${err}`);
-      });
+      .execute();
+
+    if (insertedKeys.length > 0) {
+      this.logger.log(`Seeded new settings: ${insertedKeys.join(', ')}`);
+    }
+
+    const definedKeys = new Set<string>(
+      SETTING_DEFINITIONS.map((definition) => definition.key)
+    );
+    const orphanedKeys = [...existingKeys].filter(
+      (key) => !definedKeys.has(key)
+    );
+
+    if (orphanedKeys.length > 0) {
+      this.logger.warn(
+        `Settings without definition, left in orphaned state: ${orphanedKeys.join(', ')}`
+      );
+    }
+
+    this.logger.debug(`Reconciled ${SETTING_DEFINITIONS.length} settings`);
   }
 
   private async loadSettingsFromDB(): Promise<void> {
+    this.logger.debug('Loading settings from db');
     const settings = await this.getAllEntities();
 
     for (const setting of settings) {
+      const key = setting.key as SettingKey;
       switch (setting.type) {
         case SettingType.BOOLEAN:
-          this.settingsMap[setting.key] = setting.value === 'true';
+          this.settingsMap.set(key, setting.value === 'true');
           break;
         case SettingType.JSON:
-          this.settingsMap[setting.key] = JSON.parse(setting.value);
+          this.settingsMap.set(key, JSON.parse(setting.value));
           break;
         case SettingType.INTEGER:
-          this.settingsMap[setting.key] = parseInt(setting.value);
+          this.settingsMap.set(key, parseInt(setting.value));
           break;
         case SettingType.FLOAT:
-          this.settingsMap[setting.key] = parseFloat(setting.value);
+          this.settingsMap.set(key, parseFloat(setting.value));
           break;
         case SettingType.TEXT:
         case SettingType.STRING:
-        default:
-          this.settingsMap[setting.key] = setting.value;
+          this.settingsMap.set(key, setting.value);
+          break;
       }
     }
+
+    this.logger.debug(`Loaded ${this.settingsMap.size} settings from db`);
   }
 
-  public get<T>(key: string): T | null | undefined {
-    return this.settingsMap[key] as T;
+  public get<T>(key: SettingKey): T | null | undefined {
+    return this.settingsMap.get(key) as T;
   }
 
-  public getOrElse<T>(key: string, other: T): T {
-    return (this.settingsMap[key] as T) ?? other;
+  public getOrElse<T>(key: SettingKey, other: T): T {
+    return (this.settingsMap.get(key) as T) ?? other;
   }
 
-  public getOrThrow<T>(key: string): T {
-    if (!(key in this.settingsMap)) throw new Error(`setting ${key} not found`);
+  public getOrThrow<T>(key: SettingKey): T {
+    if (!this.settingsMap.has(key)) throw new Error(`setting ${key} not found`);
 
-    return this.settingsMap[key] as T;
+    return this.settingsMap.get(key) as T;
   }
 
   public async getAllEntities(): Promise<Setting[]> {

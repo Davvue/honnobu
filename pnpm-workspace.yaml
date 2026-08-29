@@ -4,6 +4,9 @@ packages:
 allowBuilds:
   '@parcel/watcher': true
   '@scarf/scarf': false
+  '@suites/di.nestjs': true
+  '@suites/doubles.jest': true
+  argon2: false
   esbuild: true
   lmdb: true
   msgpackr-extract: true
