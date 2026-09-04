@@ -34,10 +34,10 @@ export class SettingsService implements OnModuleInit {
   ) {}
 
   public async onModuleInit(): Promise<void> {
-    this.logger.debug('Initializing settings table');
+    this.logger.debug('Initializing settings service');
     await this.seedDefinitions();
     await this.loadSettingsFromDB();
-    this.logger.debug('Done initializing settings table');
+    this.logger.debug('Done initializing settings service');
   }
 
   /**
