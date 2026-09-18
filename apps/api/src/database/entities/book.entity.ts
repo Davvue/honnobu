@@ -76,7 +76,7 @@ export class Book {
     name: 'format',
     type: 'enum',
     enum: BookFormat,
-    enumName: 'enum_book_format',
+    enumName: 'books_format_enum',
   })
   format: BookFormat;
 
