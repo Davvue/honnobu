@@ -8,6 +8,7 @@ import { join } from 'path';
 import { SettingsModule } from './settings/settings.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { BooksModule } from './books/books.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { UsersModule } from './users/users.module';
     SettingsModule,
     AuthModule,
     UsersModule,
+    BooksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
