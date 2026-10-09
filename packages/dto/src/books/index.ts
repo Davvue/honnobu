@@ -1,0 +1,1 @@
+export { ICreateBookDto } from './ICreateBookDto';
